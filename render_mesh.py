@@ -121,7 +121,7 @@ def add_lighting():
     bg_node=wnodes['Background']
     # hdr lighting
 
-    remove old node
+    #remove old node
     for node in wnodes:
         if node.type in ['OUTPUT_WORLD', 'BACKGROUND']:
             continue
@@ -138,7 +138,7 @@ def add_lighting():
         wlinks.new(mapping.outputs[0], envnode.inputs[0])
         idx = random.randint(0, len(envlist) - 1)
         envp = envlist[idx]
-        envnode.image = bpy.data.images.load(envp[0])
+        envnode.image = bpy.data.images.load(os.path.abspath(envp[0]))
         envstr = int(envp[1])
         bg_node.inputs[1].default_value=random.uniform(0.4 * envstr, 0.6 * envstr)
         wlinks.new(envnode.outputs[0], bg_node.inputs[0])
