@@ -34,7 +34,10 @@ config = {
     "device": 'GPU',  # 'CPU' or 'GPU'
     "resolution_x": 448,
     "resolution_y": 448,
-    "resolution_percentage": 100
+    "resolution_percentage": 100,
+    "saveBlendFile":False,
+    "renderOthers":False,
+    "lighting":'hdr' #'hdr' or 'point'
 }
 
 
@@ -414,28 +417,29 @@ def render_pass(obj, objpath, texpath):
     bpy.ops.render.render(write_still=False)
 
     # save_blend_file
-    if save_blend_file:
+    if config["saveBlendFile"]:
         bpy.ops.wm.save_mainfile(filepath=path_to_output_blends + fn + '.blend')
 
-    # prepare to render without environment
-    prepare_no_env_render()
+    if config["renderOthers"]:
+        # prepare to render without environment
+        prepare_no_env_render()
 
-    # remove img link
-    links.remove(imglk)
+        # remove img link
+        links.remove(imglk)
 
-    # render 
-    file_output_node_uv = tree.nodes.new('CompositorNodeOutputFile')
-    file_output_node_uv.format.file_format = 'OPEN_EXR'
-    file_output_node_uv.base_path = path_to_output_uv
-    file_output_node_uv.file_slots[0].path = fn
-    uvlk = links.new(render_layers.outputs[4], file_output_node_uv.inputs[0])
-    scene.cycles.samples = 1
-    bpy.ops.render.render(write_still=False)
+        # render
+        file_output_node_uv = tree.nodes.new('CompositorNodeOutputFile')
+        file_output_node_uv.format.file_format = 'OPEN_EXR'
+        file_output_node_uv.base_path = path_to_output_uv
+        file_output_node_uv.file_slots[0].path = fn
+        uvlk = links.new(render_layers.outputs[4], file_output_node_uv.inputs[0])
+        scene.cycles.samples = 1
+        bpy.ops.render.render(write_still=False)
 
-    # render world coordinates
-    color_wc_material(obj,'wcColor')
-    get_worldcoord_img(fn)
-    bpy.ops.render.render(write_still=False)
+        # render world coordinates
+        color_wc_material(obj,'wcColor')
+        get_worldcoord_img(fn)
+        bpy.ops.render.render(write_still=False)
 
     return fn
 
@@ -445,10 +449,12 @@ def render_img(objpath, texpath):
     bpy.ops.import_scene.obj(filepath=objpath)
     mesh_name=bpy.data.meshes[0].name
     mesh=position_object(mesh_name)
-    idx = random.randint(0, len(envlist) - 1)
-    envp = envlist[idx]
-    hdrLighting(envp[0],int(envp[1]))
-    # pointLight()
+    if config["lighting"]=='hdr':
+        idx = random.randint(0, len(envlist) - 1)
+        envp = envlist[idx]
+        hdrLighting(envp[0],int(envp[1]))
+    elif config["lighting"]=='point':
+        pointLight()
     v = reset_camera(mesh)
     if not v:
         return 1
