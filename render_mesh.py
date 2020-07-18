@@ -15,7 +15,7 @@ Updated for blender 2.8 by Jiang Xudong
 HKUST
 July 2020
 '''
-
+import json
 import sys
 import csv
 import bpy
@@ -29,16 +29,11 @@ from bpy_extras.object_utils import world_to_camera_view
 
 rridx = 1
 save_blend_file = True
-config = {
-    "numSamples": 128,
-    "device": 'GPU',  # 'CPU' or 'GPU'
-    "resolution_x": 448,
-    "resolution_y": 448,
-    "resolution_percentage": 100,
-    "saveBlendFile":False,
-    "renderOthers":False,
-    "lighting":'hdr' #'hdr' or 'point'
-}
+try:
+    with open('config.json', 'r', encoding='utf-8') as fs:
+        config=json.load(fs)
+except IOError as e:
+    print(e)
 
 
 def reset_blend():
