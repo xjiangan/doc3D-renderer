@@ -26,16 +26,12 @@ from mathutils import Vector, Euler
 import os
 import string
 from bpy_extras.object_utils import world_to_camera_view
+import argparse
+
+
 
 rridx = 1
 save_blend_file = True
-try:
-    with open('config.json', 'r', encoding='utf-8') as fs:
-        config=json.load(fs)
-except IOError as e:
-    print(e)
-
-
 def reset_blend():
     bpy.ops.wm.read_factory_settings()  # ...
     bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)  # ...
@@ -278,7 +274,7 @@ def page_texturing(obj, texpath):
     bsdf_node = nodes.new(type='ShaderNodeBsdfDiffuse')
     texture_node = nodes.new(type='ShaderNodeTexImage')
 
-    texture_node.image = bpy.data.images.load(texpath)
+    texture_node.image = bpy.data.images.load(os.path.abspath(texpath) )
 
     links = mat.node_tree.links
     links.new(bsdf_node.outputs[0], out_node.inputs[0])
@@ -384,11 +380,11 @@ def prepare_no_env_render():
     scene.view_settings.view_transform = 'Standard'
 
 
-def render_pass(obj, objpath, texpath):
+def render_pass(obj, objpath, texpath,envpath,confpath):
     # change output image name to obj file name + texture name + random three
     # characters (upper lower alphabet and digits)
     fn = os.path.split(objpath)[1][:-4] + '-' + os.path.split(texpath)[1][:-4] + '-' + \
-         ''.join(random.sample(string.ascii_letters + string.digits, 3))
+         os.path.split(envpath)[1][:-4] + os.path.split(confpath)[1][:-5]
 
     scene = bpy.data.scenes['Scene']
     # scene.render.layers['RenderLayer'].use_pass_uv=True
@@ -438,16 +434,14 @@ def render_pass(obj, objpath, texpath):
 
     return fn
 
-def render_img(objpath, texpath):
+def render_img( texpath,objpath,envpath,confpath):
     prepare_scene()
     prepare_rendersettings()
-    bpy.ops.import_scene.obj(filepath=objpath)
+    bpy.ops.import_scene.obj(filepath=os.path.abspath(objpath))
     mesh_name=bpy.data.meshes[0].name
     mesh=position_object(mesh_name)
     if config["lighting"]=='hdr':
-        idx = random.randint(0, len(envlist) - 1)
-        envp = envlist[idx]
-        hdrLighting(envp[0],int(envp[1]))
+        hdrLighting(envpath,1)
     elif config["lighting"]=='point':
         pointLight()
     v = reset_camera(mesh)
@@ -456,13 +450,29 @@ def render_img(objpath, texpath):
     else:
         #add texture
         page_texturing(mesh, texpath)
-        fn = render_pass(mesh, objpath, texpath)
+        fn = render_pass(mesh, objpath, texpath,envpath,confpath)
+
+parser = argparse.ArgumentParser(description='Render mesh')
+parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
+parser.add_argument('-m','--mesh',help='mesh path',default='obj/1_1.obj')
+parser.add_argument('-e','--env',help='environment path',default='env/0001.hdr')
+parser.add_argument('-c','--conf',help='configuration path',default='config.json')
+parser.add_argument('-o','--out',help='output folder name',default='1')
+args, unknown = parser.parse_known_args()
 
 
-id1 = int(sys.argv[-2])
-id2 = int(sys.argv[-1])
-rridx = int(sys.argv[-3])
+try:
+    with open(args.conf, 'r', encoding='utf-8') as fs:
+        config=json.load(fs)
+except IOError as e:
+    print(e)
 
+
+
+# id1 = int(sys.argv[-2])
+# id2 = int(sys.argv[-1])
+# rridx = int(sys.argv[-3])
+#
 path_to_output_images=os.path.abspath('./img/{}/'.format(rridx))
 path_to_output_uv = os.path.abspath('./uv/{}/'.format(rridx))
 path_to_output_wc = os.path.abspath('./wc/{}/'.format(rridx))
@@ -472,24 +482,27 @@ if save_blend_file:
 for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc, path_to_output_blends]:
     if not os.path.exists(fd):
         os.makedirs(fd)
-
-env_list = './envs.csv'
-tex_list = './tex.csv'
-obj_list = './objs.csv'
-
-with open(env_list, 'r') as f:
-    envlist = list(csv.reader(f))
-
-with open(tex_list, 'r') as t, open(obj_list, 'r') as m:
-    texlist = list(csv.reader(t))
-    objlist = list(csv.reader(m))
-    # print(objlist)
-    for k in range(id1, id2):
-        # print(k)
-        objpath = os.path.abspath(objlist[k][0])
-        idx = random.randint(0, len(texlist))
-        texpath = os.path.abspath(texlist[idx][0])
-        print(objpath)
-        print(texpath)
-
-        render_img(objpath, texpath)
+if not os.path.exists(os.path.join(os.path.abspath(path_to_output_images),os.path.split(args.mesh)[1][:-4] + '-' + os.path.split(args.texture)[1][:-4] + '-' + \
+         os.path.split(args.env)[1][:-4] + os.path.split(args.conf)[1][:-5]+'0001.png')):
+    render_img(args.texture,args.mesh,args.env,args.conf)
+#
+# env_list = './envs.csv'
+# tex_list = './tex.csv'
+# obj_list = './objs.csv'
+#
+# with open(env_list, 'r') as f:
+#     envlist = list(csv.reader(f))
+#
+# with open(tex_list, 'r') as t, open(obj_list, 'r') as m:
+#     texlist = list(csv.reader(t))
+#     objlist = list(csv.reader(m))
+#     # print(objlist)
+#     for k in range(id1, id2):
+#         # print(k)
+#         objpath = os.path.abspath(objlist[k][0])
+#         idx = random.randint(0, len(texlist))
+#         texpath = os.path.abspath(texlist[idx][0])
+#         print(objpath)
+#         print(texpath)
+#
+#         render_img(objpath, texpath)
