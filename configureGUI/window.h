@@ -23,5 +23,6 @@ private:
     QHBoxLayout *assetLayout;
     QButtonGroup *loadButtonGroup;
     QPushButton *runButton;
+    QTextEdit *logView;
 };
 #endif // WINDOW_H

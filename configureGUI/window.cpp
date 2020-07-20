@@ -7,7 +7,6 @@ Window::Window(QWidget *parent)
     resize(1080, 360);
     assetLayout = new QHBoxLayout;
     loadButtonGroup = new QButtonGroup;
-    runButton = new QPushButton(tr("run"), this);
     for (int i = 0; i < 4; i++)
     {
         assetLabel[i] = new QLabel(this);
@@ -20,7 +19,12 @@ Window::Window(QWidget *parent)
         assetVLayout[i]->addWidget(assetListWidget[i]);
         assetLayout->addLayout(assetVLayout[i]);
     }
-    assetLayout->addWidget(runButton);
+    runButton = new QPushButton(tr("run"), this);
+    logView = new QTextEdit;
+    QVBoxLayout *runVLayout = new QVBoxLayout;
+    runVLayout->addWidget(runButton);
+    runVLayout->addWidget(logView);
+    assetLayout->addLayout(runVLayout);
 
     assetLabel[0]->setText(tr("texture"));
     assetLabel[1]->setText(tr("mesh"));
@@ -47,8 +51,9 @@ void Window::run()
     arguments << "-t" << paths[0] << "-m" << paths[1] << "-e" << paths[2] << "-c" << paths[3];
     QProcess *cmdProcess = new QProcess;
     QObject::connect(cmdProcess, &QProcess::readyRead, [=]() {
-        QTextCodec *codec = QTextCodec::codecForName("GBK");
+        QTextCodec *codec = QTextCodec::codecForName("UTF-8");
         QString dir = codec->toUnicode(cmdProcess->readAll());
+        logView->append(dir);
         qDebug() << dir;
     });
     cmdProcess->start(program, arguments);
