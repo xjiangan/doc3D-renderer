@@ -458,7 +458,8 @@ parser.add_argument('-m','--mesh',help='mesh path',default='obj/1_1.obj')
 parser.add_argument('-e','--env',help='environment path',default='env/0001.hdr')
 parser.add_argument('-c','--conf',help='configuration path',default='config.json')
 parser.add_argument('-o','--out',help='output folder name',default='1')
-args, unknown = parser.parse_known_args()
+args, unknown = parser.parse_known_args(sys.argv[5:])
+print(args)
 
 
 try:
@@ -484,7 +485,10 @@ for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc, path_to_
         os.makedirs(fd)
 if not os.path.exists(os.path.join(os.path.abspath(path_to_output_images),os.path.split(args.mesh)[1][:-4] + '-' + os.path.split(args.texture)[1][:-4] + '-' + \
          os.path.split(args.env)[1][:-4] + os.path.split(args.conf)[1][:-5]+'0001.png')):
-    render_img(args.texture,args.mesh,args.env,args.conf)
+	print("start render")
+	render_img(args.texture,args.mesh,args.env,args.conf)
+else:
+	print("exists")
 #
 # env_list = './envs.csv'
 # tex_list = './tex.csv'

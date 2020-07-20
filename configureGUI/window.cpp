@@ -18,20 +18,25 @@ Window::Window(QWidget *parent)
         assetVLayout[i]->addWidget(loadButton[i]);
         assetVLayout[i]->addWidget(assetListWidget[i]);
         assetLayout->addLayout(assetVLayout[i]);
+        new QListWidgetItem(tr("test"), assetListWidget[i]);
     }
-    runButton = new QPushButton(tr("run"), this);
-    logView = new QTextEdit;
-    QVBoxLayout *runVLayout = new QVBoxLayout;
-    runVLayout->addWidget(runButton);
-    runVLayout->addWidget(logView);
-    assetLayout->addLayout(runVLayout);
 
     assetLabel[0]->setText(tr("texture"));
     assetLabel[1]->setText(tr("mesh"));
     assetLabel[2]->setText(tr("env"));
     assetLabel[3]->setText(tr("conf"));
 
-    setLayout(assetLayout);
+    runButton = new QPushButton(tr("run"), this);
+    logView = new QTextEdit;
+    QVBoxLayout *runVLayout = new QVBoxLayout;
+    assetLayout->addLayout(runVLayout);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(assetLayout);
+    mainLayout->addWidget(runButton);
+    mainLayout->addWidget(logView);
+
+    setLayout(mainLayout);
     connect(loadButtonGroup, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &Window::loadAsset);
     connect(runButton, &QPushButton::clicked, this, &Window::run);
     //connect(texture, &QListWidget::currentTextChanged, texLable, &QLabel::setText);
@@ -39,7 +44,7 @@ Window::Window(QWidget *parent)
 void Window::run()
 {
     QString program = "blender";
-    QStringList arguments{"--background", "--python", "render_mesh.py"};
+    QStringList arguments{"--background", "--python", "render_mesh.py", "--"};
     QString paths[4];
     for (int i = 0; i < 4; i++)
     {
@@ -48,7 +53,8 @@ void Window::run()
             return;
         paths[i] = item->text();
     }
-    arguments << "-t" << paths[0] << "-m" << paths[1] << "-e" << paths[2] << "-c" << paths[3];
+    arguments << "--texture" << paths[0] << "--mesh" << paths[1] << "--env" << paths[2] << "--conf" << paths[3];
+    logView->append(arguments.join(" "));
     QProcess *cmdProcess = new QProcess;
     QObject::connect(cmdProcess, &QProcess::readyRead, [=]() {
         QTextCodec *codec = QTextCodec::codecForName("UTF-8");
