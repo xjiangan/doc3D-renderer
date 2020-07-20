@@ -152,10 +152,10 @@ def pointLight():
     bg_node.inputs[1].default_value = 0
 
     d = random.uniform(3, 5)
-    litpos = Vector((0, d, 0))
+    litpos = Vector(config["litpos"])
     eul = Euler((0, 0, 0), 'XYZ')
-    eul.rotate_axis('Z', random.uniform(0, 3.1415))
-    eul.rotate_axis('X', random.uniform(math.radians(45), math.radians(135)))
+    eul.rotate_axis('Z', config["litEulerZ"])
+    eul.rotate_axis('X', config["litEulerX"])
     litpos.rotate(eul)
 
     bpy.ops.object.add(type='LIGHT', location=litpos)
@@ -168,11 +168,11 @@ def pointLight():
             output_node = node
         elif node.type == 'EMISSION':
             lamp_node = node
-    strngth = random.uniform(300, 400)
+    strngth = config["litStr"]
     lamp_node.inputs[1].default_value = strngth
     # Change warmness of light to simulate more natural lighting
     bbody = nodes.new(type='ShaderNodeBlackbody')
-    color_temp = random.uniform(2700, 10200)
+    color_temp = config["litColorTemp"]
     bbody.inputs[0].default_value = color_temp
     links.new(bbody.outputs[0], lamp_node.inputs[0])
 
@@ -465,6 +465,7 @@ print(args)
 try:
     with open(args.conf, 'r', encoding='utf-8') as fs:
         config=json.load(fs)
+        print(config)
 except IOError as e:
     print(e)
 
