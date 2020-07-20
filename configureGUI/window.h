@@ -14,6 +14,7 @@ public:
 
     void loadAsset(int id);
     void run();
+    void openItem(QListWidgetItem *item);
 
 private:
     QLabel *assetLabel[4];

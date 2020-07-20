@@ -39,7 +39,12 @@ Window::Window(QWidget *parent)
     setLayout(mainLayout);
     connect(loadButtonGroup, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &Window::loadAsset);
     connect(runButton, &QPushButton::clicked, this, &Window::run);
+    connect(assetListWidget[3], &QListWidget::itemActivated, this, &Window::openItem);
     //connect(texture, &QListWidget::currentTextChanged, texLable, &QLabel::setText);
+}
+void Window::openItem(QListWidgetItem *item)
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(item->text()));
 }
 void Window::run()
 {
