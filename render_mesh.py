@@ -221,7 +221,7 @@ def pointLight():
 #     wlinks=world.node_tree.links
 
 
-def reset_camera(mesh):
+def randCam(mesh):
     bpy.ops.object.select_all(action='DESELECT')
     camera = bpy.data.objects['Camera']
 
@@ -261,6 +261,44 @@ def reset_camera(mesh):
         id += 1
     return vid
 
+def reset_camera(mesh):
+    bpy.ops.object.select_all(action='DESELECT')
+    camera = bpy.data.objects['Camera']
+
+    # sample camera config until find a valid one
+    # id = 0
+    # vid = False
+    # focal length
+    bpy.data.cameras['Camera'].lens = config["camLens"]
+    # cam position
+    # d = random.uniform(2.3, 3.3)
+    # eul = Euler((0, 0, 0), 'XYZ')
+    # eul.rotate_axis('Z', random.uniform(0, 3.1415))
+    # eul.rotate_axis('X', random.uniform(math.radians(60), math.radians(120)))
+
+    # campos.rotate(eul)
+    camera.location = Vector(config["campos"])
+    camera.rotation_euler = Vector(config["camEul"])
+    # while id < 50:
+    #     # look at pos
+    #     st = (d - 2.3) / 1.0 * 0.2 + 0.3
+    #     lookat = Vector((random.uniform(-st, st), random.uniform(-st, st), 0))
+    #     eul = Euler((0, 0, 0), 'XYZ')
+    #
+    #     eul.rotate_axis('X', math.atan2(lookat.y - campos.y, campos.z))
+    #     eul.rotate_axis('Y', math.atan2(campos.x - lookat.x, campos.z))
+    #     st = (d - 2.3) / 1.0 * 15 + 5.
+    #     eul.rotate_axis('Z', random.uniform(math.radians(-90 - st), math.radians(-90 + st)))
+    #
+    #     camera.rotation_euler = eul
+    #     bpy.context.view_layer.update()
+    #
+    #     if isVisible(mesh, camera):
+    #         vid = True
+    #         break
+    #
+    #     id += 1
+    return True
 
 def page_texturing(obj, texpath):
     mat = bpy.data.materials.new('Material.001')
@@ -429,6 +467,9 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
         get_worldcoord_img(fn)
         bpy.ops.render.render(write_still=False)
 
+    camera = bpy.data.objects['Camera']
+    print(camera.location)
+    print(camera.rotation_euler)
     return fn
 
 def render_img( texpath,objpath,envpath,confpath):
@@ -441,7 +482,12 @@ def render_img( texpath,objpath,envpath,confpath):
         hdrLighting(envpath,1)
     elif config["lighting"]=='point':
         pointLight()
-    v = reset_camera(mesh)
+
+    if(config["randCam"]):
+    	v=randCam(mesh)
+    else:
+    	v = reset_camera(mesh)
+    
     if not v:
         return 1
     else:
@@ -484,7 +530,7 @@ for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc, path_to_
 
 confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
 fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
-   + '-' +  os.path.split(args.env)[1][:-4] + confHash[0:5]
+   + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
 fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
 if not os.path.exists(fPath):
 	print("start render")

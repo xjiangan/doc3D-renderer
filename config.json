@@ -12,6 +12,10 @@
     "litEulerX":1.6,
     "litStr":300,
     "litColorTemp":5000,
+    "randCam":false,
+    "camLens":30,
+    "campos":[-0.8582, 0.5767, 2.5831],
+    "camEul":[0.1961, -0.0933, -1.6749],
     "texPath":"",
     "meshPath":"",
     "envPath":""
