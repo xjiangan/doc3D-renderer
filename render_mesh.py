@@ -27,7 +27,7 @@ import os
 import string
 from bpy_extras.object_utils import world_to_camera_view
 import argparse
-
+import hashlib
 
 
 rridx = 1
@@ -383,9 +383,6 @@ def prepare_no_env_render():
 def render_pass(obj, objpath, texpath,envpath,confpath):
     # change output image name to obj file name + texture name + random three
     # characters (upper lower alphabet and digits)
-    fn = os.path.split(objpath)[1][:-4] + '-' + os.path.split(texpath)[1][:-4] + '-' + \
-         os.path.split(envpath)[1][:-4] + os.path.split(confpath)[1][:-5]
-
     scene = bpy.data.scenes['Scene']
     # scene.render.layers['RenderLayer'].use_pass_uv=True
     bpy.context.scene.use_nodes = True
@@ -402,9 +399,9 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     file_output_node_img = tree.nodes.new('CompositorNodeOutputFile')
     file_output_node_img.format.file_format = 'PNG'
     file_output_node_img.base_path = path_to_output_images
-    file_output_node_img.file_slots[0].path = fn
+    file_output_node_img.file_slots[0].path = fn+'-#'
     imglk = links.new(render_layers.outputs[0], file_output_node_img.inputs[0])
-    scene.cycles.samples = 128
+    # scene.cycles.samples = 128
     bpy.ops.render.render(write_still=False)
 
     # save_blend_file
@@ -484,8 +481,12 @@ if save_blend_file:
 for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc, path_to_output_blends]:
     if not os.path.exists(fd):
         os.makedirs(fd)
-if not os.path.exists(os.path.join(os.path.abspath(path_to_output_images),os.path.split(args.mesh)[1][:-4] + '-' + os.path.split(args.texture)[1][:-4] + '-' + \
-         os.path.split(args.env)[1][:-4] + os.path.split(args.conf)[1][:-5]+'0001.png')):
+
+confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
+fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
+   + '-' +  os.path.split(args.env)[1][:-4] + confHash[0:5]
+fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
+if not os.path.exists(fPath):
 	print("start render")
 	render_img(args.texture,args.mesh,args.env,args.conf)
 else:
