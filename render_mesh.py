@@ -533,8 +533,8 @@ fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
    + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
 fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
 if not os.path.exists(fPath):
-	print("start render")
 	render_img(args.texture,args.mesh,args.env,args.conf)
+	print("---output:"+fPath+"---")
 else:
 	print("exists")
 #

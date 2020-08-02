@@ -15,15 +15,23 @@ public:
     void loadAsset(int id);
     void run();
     void openItem(QListWidgetItem *item);
+    void viewImage(QString fn);
+
+public slots:
+    void loadFolder(int id,QDir* dir=nullptr);
+
 
 private:
-    QLabel *assetLabel[4];
-    QListWidget *assetListWidget[4];
-    QVBoxLayout *assetVLayout[4];
-    QPushButton *loadButton[4];
+    QLabel *assetLabel[5];
+    QListWidget *assetListWidget[5];
+    QVBoxLayout *assetVLayout[5];
+    QPushButton *loadButton[5];
+    QPushButton *folderButton[5];
     QHBoxLayout *assetLayout;
     QButtonGroup *loadButtonGroup;
+    QButtonGroup *folderButtonGroup;
     QPushButton *runButton;
     QTextEdit *logView;
+    QLabel* view;
 };
 #endif // WINDOW_H

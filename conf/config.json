@@ -1,5 +1,5 @@
 {
-    "numSamples": 1,
+    "numSamples": 128,
     "device": "GPU",  
     "resolution_x": 448,
     "resolution_y": 448,
