@@ -9,11 +9,11 @@ Window::Window(QWidget *parent)
     loadButtonGroup = new QButtonGroup;
     folderButtonGroup=new QButtonGroup;
     QDir dirs[5];
-    dirs[0]=QDir("./tex");
-    dirs[1]=QDir("./obj");
-    dirs[2]=QDir("./env");
-    dirs[3]=QDir("./conf");
-    dirs[4]=QDir("./img/1");
+//    dirs[0]=QDir("./tex");
+//    dirs[1]=QDir("./obj");
+//    dirs[2]=QDir("./env");
+//    dirs[3]=QDir("./conf");
+//    dirs[4]=QDir("./img/1");
 
 
     for (int i = 0; i < 5; i++)
@@ -30,7 +30,7 @@ Window::Window(QWidget *parent)
         assetVLayout[i]->addWidget(folderButton[i]);
         assetVLayout[i]->addWidget(assetListWidget[i]);
         assetLayout->addLayout(assetVLayout[i]);
-        loadFolder(i,dirs+i);
+//        loadFolder(i,dirs+i);
     }
 
 
