@@ -422,7 +422,8 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     # change output image name to obj file name + texture name + random three
     # characters (upper lower alphabet and digits)
     scene = bpy.data.scenes['Scene']
-    # scene.render.layers['RenderLayer'].use_pass_uv=True
+    bpy.context.view_layer.use_pass_uv = True
+    #scene.render.layers['RenderLayer'].use_pass_uv=True
     bpy.context.scene.use_nodes = True
     tree = bpy.context.scene.node_tree
     links = tree.links
@@ -458,7 +459,7 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
         file_output_node_uv.format.file_format = 'OPEN_EXR'
         file_output_node_uv.base_path = path_to_output_uv
         file_output_node_uv.file_slots[0].path = fn
-        uvlk = links.new(render_layers.outputs[4], file_output_node_uv.inputs[0])
+        uvlk = links.new(render_layers.outputs[3], file_output_node_uv.inputs[0])
         scene.cycles.samples = 1
         bpy.ops.render.render(write_still=False)
 
