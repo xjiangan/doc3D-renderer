@@ -380,6 +380,33 @@ def color_wc_material(obj, mat_name):
     links.new(em_node.outputs[0], mat_node.inputs[0])
 
 
+def get_albedo_img(img_name):
+    scene=bpy.data.scenes['Scene']
+    bpy.context.view_layer.use_pass_diffuse_color = True
+    bpy.context.scene.use_nodes = True
+    tree = bpy.context.scene.node_tree
+    links = tree.links
+    # clear default nodes
+    for n in tree.nodes:
+        tree.nodes.remove(n)
+
+    # create input render layer node
+    render_layers = tree.nodes.new('CompositorNodeRLayers')
+
+    file_output_node = tree.nodes.new('CompositorNodeOutputFile')
+    comp_node = tree.nodes.new('CompositorNodeComposite')
+
+    # file_output_node_0.format.file_format = 'OPEN_EXR'
+    out_path=path_to_output_alb
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
+    
+    file_output_node.base_path = out_path
+    file_output_node.file_slots[0].path = img_name
+    links.new(render_layers.outputs["DiffCol"], file_output_node.inputs[0])
+    links.new(render_layers.outputs["DiffCol"], comp_node.inputs[0])
+
+
 def get_worldcoord_img(img_name):
     bpy.context.scene.use_nodes = True
     tree = bpy.context.scene.node_tree
@@ -423,6 +450,7 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     # characters (upper lower alphabet and digits)
     scene = bpy.data.scenes['Scene']
     bpy.context.view_layer.use_pass_uv = True
+    # bpy.context.view_layer.use_pass_diffuse_color = True
     #scene.render.layers['RenderLayer'].use_pass_uv=True
     bpy.context.scene.use_nodes = True
     tree = bpy.context.scene.node_tree
@@ -439,7 +467,7 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     file_output_node_img.format.file_format = 'PNG'
     file_output_node_img.base_path = path_to_output_images
     file_output_node_img.file_slots[0].path = fn+'-#'
-    imglk = links.new(render_layers.outputs[0], file_output_node_img.inputs[0])
+    imglk = links.new(render_layers.outputs["Image"], file_output_node_img.inputs[0])
     # scene.cycles.samples = 128
     bpy.ops.render.render(write_still=False)
 
@@ -458,14 +486,22 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
         file_output_node_uv = tree.nodes.new('CompositorNodeOutputFile')
         file_output_node_uv.format.file_format = 'OPEN_EXR'
         file_output_node_uv.base_path = path_to_output_uv
-        file_output_node_uv.file_slots[0].path = fn
-        uvlk = links.new(render_layers.outputs[3], file_output_node_uv.inputs[0])
+        file_output_node_uv.file_slots[0].path = fn+"-#"
+        uvlk = links.new(render_layers.outputs["UV"], file_output_node_uv.inputs[0])
         scene.cycles.samples = 1
         bpy.ops.render.render(write_still=False)
 
+        # get_albedo_img(fn+"-#")
+        # bpy.context.scene.camera = bpy.data.objects['Camera']
+        # bpy.data.scenes['Scene'].render.image_settings.color_depth='8'
+        # bpy.data.scenes['Scene'].render.image_settings.color_mode='RGB'
+        # # bpy.data.scenes['Scene'].render.image_settings.file_format='OPEN_EXR'
+        # bpy.data.scenes['Scene'].render.image_settings.compression=0
+        # bpy.ops.render.render(write_still=False)
+
         # render world coordinates
         color_wc_material(obj,'wcColor')
-        get_worldcoord_img(fn)
+        get_worldcoord_img(fn+"-#")
         bpy.ops.render.render(write_still=False)
 
     camera = bpy.data.objects['Camera']
@@ -494,7 +530,7 @@ def render_img( texpath,objpath,envpath,confpath):
     else:
         #add texture
         page_texturing(mesh, texpath)
-        fn = render_pass(mesh, objpath, texpath,envpath,confpath)
+        # fn = render_pass(mesh, objpath, texpath,envpath,confpath)
 
 parser = argparse.ArgumentParser(description='Render mesh')
 parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
@@ -515,6 +551,31 @@ except IOError as e:
 
 
 
+
+# rridx=sys.argv[-3]
+# strt=int(sys.argv[-2])
+# end=int(sys.argv[-1])
+# blend_list = './blendlists/blendlist'+ str(rridx) +'.csv'
+
+# if not os.path.exists(path_to_output_alb):
+#     os.makedirs(path_to_output_alb)
+
+# with open(blend_list,'r') as b:
+#     blendlist = list(csv.reader(b))
+
+# for bfile in blendlist[strt:end]:
+#     bfname=bfile[0]
+#     fn=bfname.split('/')[-1][:-6]
+#     #load blend file 
+#     bpy.ops.wm.open_mainfile(filepath=bfname)
+#     prepare_rendersettings()
+#     prepare_no_env_render()
+#     get_albedo_img(fn)
+#     render()
+
+
+
+
 # id1 = int(sys.argv[-2])
 # id2 = int(sys.argv[-1])
 # rridx = int(sys.argv[-3])
@@ -522,6 +583,7 @@ except IOError as e:
 path_to_output_images=os.path.abspath('./img/{}/'.format(rridx))
 path_to_output_uv = os.path.abspath('./uv/{}/'.format(rridx))
 path_to_output_wc = os.path.abspath('./wc/{}/'.format(rridx))
+path_to_output_alb =os.path.abspath('./alb/{}/'.format(rridx)) 
 if save_blend_file:
     path_to_output_blends=os.path.abspath('./bld/{}/'.format(rridx))
 
@@ -538,6 +600,10 @@ if not os.path.exists(fPath):
 	print("---output:"+fPath+"---")
 else:
 	print("exists")
+
+
+
+
 #
 # env_list = './envs.csv'
 # tex_list = './tex.csv'
