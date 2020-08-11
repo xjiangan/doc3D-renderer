@@ -491,13 +491,13 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
         scene.cycles.samples = 1
         bpy.ops.render.render(write_still=False)
 
-        # get_albedo_img(fn+"-#")
-        # bpy.context.scene.camera = bpy.data.objects['Camera']
-        # bpy.data.scenes['Scene'].render.image_settings.color_depth='8'
-        # bpy.data.scenes['Scene'].render.image_settings.color_mode='RGB'
-        # # bpy.data.scenes['Scene'].render.image_settings.file_format='OPEN_EXR'
-        # bpy.data.scenes['Scene'].render.image_settings.compression=0
-        # bpy.ops.render.render(write_still=False)
+        get_albedo_img(fn+"-#")
+        bpy.context.scene.camera = bpy.data.objects['Camera']
+        bpy.data.scenes['Scene'].render.image_settings.color_depth='8'
+        bpy.data.scenes['Scene'].render.image_settings.color_mode='RGB'
+        # bpy.data.scenes['Scene'].render.image_settings.file_format='OPEN_EXR'
+        bpy.data.scenes['Scene'].render.image_settings.compression=0
+        bpy.ops.render.render(write_still=False)
 
         # render world coordinates
         color_wc_material(obj,'wcColor')
@@ -507,7 +507,6 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     camera = bpy.data.objects['Camera']
     print(camera.location)
     print(camera.rotation_euler)
-    return fn
 
 def render_img( texpath,objpath,envpath,confpath):
     prepare_scene()
@@ -530,7 +529,7 @@ def render_img( texpath,objpath,envpath,confpath):
     else:
         #add texture
         page_texturing(mesh, texpath)
-        # fn = render_pass(mesh, objpath, texpath,envpath,confpath)
+        render_pass(mesh, objpath, texpath,envpath,confpath)
 
 parser = argparse.ArgumentParser(description='Render mesh')
 parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
