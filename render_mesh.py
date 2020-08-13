@@ -102,6 +102,21 @@ def prepare_scene():
 def prepare_rendersettings():
     bpy.ops.object.select_all(action='DESELECT')  # ...
     bpy.data.scenes['Scene'].cycles.device = config["device"]
+    if config["device"]=="GPU" :
+        cprefs = bpy.context.preferences.addons['cycles'].preferences
+        print("previous compute device is "+cprefs.compute_device_type)
+		# Attempt to set GPU device types if available
+        for compute_device_type in ('CUDA', 'OPENCL', 'NONE'):
+            try:
+                cprefs.compute_device_type = compute_device_type
+                print("compute device is "+cprefs.compute_device_type)
+                break
+            except TypeError:
+                pass
+
+		#Enable all CPU and GPU devices
+        for device in cprefs.devices:
+            device.use = True
     bpy.data.scenes['Scene'].render.resolution_x = config["resolution_x"]
     bpy.data.scenes['Scene'].render.resolution_y = config["resolution_y"]
     bpy.data.scenes['Scene'].render.resolution_percentage = config["resolution_percentage"]
@@ -515,7 +530,7 @@ def render_img( texpath,objpath,envpath,confpath):
     mesh_name=bpy.data.meshes[0].name
     mesh=position_object(mesh_name)
     if config["lighting"]=='hdr':
-        hdrLighting(envpath,1)
+        hdrLighting(envpath,config["hdrStr"])
     elif config["lighting"]=='point':
         pointLight()
 
@@ -531,12 +546,15 @@ def render_img( texpath,objpath,envpath,confpath):
         page_texturing(mesh, texpath)
         render_pass(mesh, objpath, texpath,envpath,confpath)
 
+#parse argument
 parser = argparse.ArgumentParser(description='Render mesh')
 parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
 parser.add_argument('-m','--mesh',help='mesh path',default='obj/1_1.obj')
 parser.add_argument('-e','--env',help='environment path',default='env/0001.hdr')
 parser.add_argument('-c','--conf',help='configuration path',default='config.json')
 parser.add_argument('-o','--out',help='output folder name',default='1')
+parser.add_argument('-b' ,'--batch', action='store_true',
+                        help='batch render files in folder')
 args, unknown = parser.parse_known_args(sys.argv[5:])
 print(args)
 
@@ -549,6 +567,37 @@ except IOError as e:
     print(e)
 
 
+#prepare output directory
+path_to_output_images=os.path.abspath('./img/{}/'.format(args.out))
+path_to_output_uv = os.path.abspath('./uv/{}/'.format(args.out))
+path_to_output_wc = os.path.abspath('./wc/{}/'.format(args.out))
+path_to_output_alb =os.path.abspath('./alb/{}/'.format(args.out)) 
+path_to_output_blends=os.path.abspath('./bld/{}/'.format(args.out))
+
+for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc,path_to_output_alb, path_to_output_blends]:
+    if not os.path.exists(fd):
+        os.makedirs(fd)
+
+if args.batch:
+	for fname in os.listdir(args.texture):
+		if '.jpg' in fname or '.JPG' in fname or '.png' in fname:
+			randMesh=os.path.join(args.mesh,random.choice(os.listdir(args.mesh)) )
+			randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
+			fn=fname[:-4] 
+			fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
+			render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
+			print("---output:"+fPath+"---")
+
+else:
+	confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
+	fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
+	   + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
+	fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
+	if not os.path.exists(fPath):
+		render_img(args.texture,args.mesh,args.env,args.conf)
+		print("---output:"+fPath+"---")
+	else:
+		print("exists")
 
 
 # rridx=sys.argv[-3]
@@ -579,28 +628,6 @@ except IOError as e:
 # id2 = int(sys.argv[-1])
 # rridx = int(sys.argv[-3])
 #
-path_to_output_images=os.path.abspath('./img/{}/'.format(rridx))
-path_to_output_uv = os.path.abspath('./uv/{}/'.format(rridx))
-path_to_output_wc = os.path.abspath('./wc/{}/'.format(rridx))
-path_to_output_alb =os.path.abspath('./alb/{}/'.format(rridx)) 
-if save_blend_file:
-    path_to_output_blends=os.path.abspath('./bld/{}/'.format(rridx))
-
-for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc, path_to_output_blends]:
-    if not os.path.exists(fd):
-        os.makedirs(fd)
-
-confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
-fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
-   + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
-fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
-if not os.path.exists(fPath):
-	render_img(args.texture,args.mesh,args.env,args.conf)
-	print("---output:"+fPath+"---")
-else:
-	print("exists")
-
-
 
 
 #
