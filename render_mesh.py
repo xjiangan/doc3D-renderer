@@ -585,8 +585,11 @@ if args.batch:
 			randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
 			fn=fname[:-4] 
 			fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
-			render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
-			print("---output:"+fPath+"---")
+			if not os.path.exists(fPath):
+				render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
+				print("---output:"+fPath+"---")
+			else:
+				print("exists")
 
 else:
 	confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
