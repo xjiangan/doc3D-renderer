@@ -579,7 +579,7 @@ for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc,path_to_o
         os.makedirs(fd)
 
 if args.batch:
-	for fname in os.listdir(args.texture):
+	for fname in sorted(os.listdir(args.texture)):
 		if '.jpg' in fname or '.JPG' in fname or '.png' in fname:
 			randMesh=os.path.join(args.mesh,random.choice(os.listdir(args.mesh)) )
 			randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
