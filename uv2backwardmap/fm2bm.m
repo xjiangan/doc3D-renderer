@@ -1,8 +1,8 @@
 % fm2bm - Call uv2mp in parallel
 % Author: Sagnik Das
 
-src_dir = '../uvmat/1/';
-dst_dir = '../bm/1/';
+src_dir = '../uvmat/test/';
+dst_dir = '../bm/test/';
 
 files=dir(src_dir);
 n=length(files);
