@@ -1,10 +1,10 @@
 % fm2bm - Call uv2mp in parallel
 % Author: Sagnik Das
 
-src_dir = '../uvmat/test/*.mat';
+src_dir = '../uvmat/test/';
 dst_dir = '../bm/test/';
 
-files=dir(src_dir);
+files=dir('../uvmat/test/*.mat');
 n=length(files);
 % the loop should be modified based on how you organize your images
 
