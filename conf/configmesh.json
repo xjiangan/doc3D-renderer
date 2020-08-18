@@ -1,0 +1,23 @@
+{
+    "numSamples": 128,
+    "device": "GPU",  
+    "resolution_x": 448,
+    "resolution_y": 448,
+    "resolution_percentage": 100,
+    "saveBlendFile":false,
+    "renderOthers":false,
+    "lighting":"hdr",
+    "litpos":[0,5,0],
+    "litEulerZ":1.6,
+    "litEulerX":1.6,
+    "litStr":300,
+    "hdrStr":70,
+    "litColorTemp":5000,
+    "randCam":true,
+    "camLens":30,
+    "campos":[-0.8582, 0.5767, 2.5831],
+    "camEul":[0.1961, -0.0933, -1.6749],
+    "texPath":"",
+    "meshPath":"",
+    "envPath":""
+}

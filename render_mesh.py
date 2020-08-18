@@ -555,6 +555,8 @@ parser.add_argument('-c','--conf',help='configuration path',default='config.json
 parser.add_argument('-o','--out',help='output folder name',default='1')
 parser.add_argument('-b' ,'--batch', action='store_true',
                         help='batch render files in folder')
+parser.add_argument('-s' ,'--selectmesh', action='store_true',
+                        help='batch render 1000 meshes')
 args, unknown = parser.parse_known_args(sys.argv[5:])
 print(args)
 
@@ -590,6 +592,19 @@ if args.batch:
 				print("---output:"+fPath+"---")
 			else:
 				print("exists")
+elif args.selectmesh:
+	texpath='./recon_tex/chess48.png'
+	for fname in sorted(os.listdir(args.mesh)):
+		meshPath=os.path.join(args.mesh,fname)
+		randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
+		fn=fname[:-4] 
+		fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
+		if not os.path.exists(fPath):
+			render_img(texpath,meshPath,randEnv,args.conf)
+			print("---output:"+fPath+"---")
+		else:
+			print("exists")
+
 
 else:
 	confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
