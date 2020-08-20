@@ -581,6 +581,8 @@ def render_img( texpath,objpath,envpath,confpath):
     prepare_rendersettings()
     if args.generate:
         image=bpy.data.images.load(os.path.abspath(texpath) )
+        if image.size[0]==0:
+            return 2
         wdh=image.size[1]/image.size[0]
         createBook(wdh,0.5,random.uniform(0.1,1.7),random.uniform(0.1,1.7))
     else:
