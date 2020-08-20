@@ -15,6 +15,7 @@ Updated for blender 2.8 by Jiang Xudong
 HKUST
 July 2020
 '''
+import glob
 import json
 import sys
 import csv
@@ -28,6 +29,7 @@ import string
 from bpy_extras.object_utils import world_to_camera_view
 import argparse
 import hashlib
+from bpy import ops,context
 
 
 rridx = 1
@@ -70,7 +72,7 @@ def isVisible(mesh, cam):
             ct1 += 1
         if nm_ndc > math.radians(60):
             ct2 += 1
-    if min(ct1, ct2) / 10000. > 0.03:
+    if min(ct1, ct2) / 1000000. > 0.03:
         bm.free()
         print('ct1: {}, ct2: {}\n'.format(ct1, ct2))
         return False
@@ -125,7 +127,7 @@ def prepare_rendersettings():
 def position_object(mesh_name):
     mesh = bpy.data.objects[mesh_name]
     select_object(mesh)
-    mesh.rotation_euler = [0.0, 0.0, 0.0]
+    # mesh.rotation_euler = [0.0, 0.0, 0.0]
     return mesh
 
 
@@ -316,9 +318,11 @@ def reset_camera(mesh):
     return True
 
 def page_texturing(obj, texpath):
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.ops.object.material_slot_add()
     mat = bpy.data.materials.new('Material.001')
     mat.use_nodes = True
-    obj.material_slots[0].material = mat
+    obj.material_slots[0].material = bpy.data.materials['Material.001']
     nodes = mat.node_tree.nodes
     # clear default nodes
     for n in nodes:
@@ -523,10 +527,62 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
     print(camera.location)
     print(camera.rotation_euler)
 
+def createBook(wdh,r,k1,k2):
+    for bpy_data_iter in (
+        bpy.data.meshes,
+        bpy.data.lights,
+        bpy.data.images,
+        bpy.data.materials,
+        bpy.data.curves
+):
+        for id_data in bpy_data_iter:
+            bpy_data_iter.remove(id_data, do_unlink=True)
+
+    ops.curve.primitive_bezier_curve_add(radius=2*r,enter_editmode=True)
+    ops.curve.subdivide()
+    curve=context.active_object
+    bez_points = curve.data.splines[0].bezier_points
+    bez_points[0].handle_right_type="FREE"
+    bez_points[0].handle_left.y=0
+    bez_points[0].handle_right.y=0
+    bez_points[0].handle_right.x=-r
+   
+    bez_points[1].handle_right_type="FREE"
+    bez_points[1].handle_left_type="FREE"
+    bez_points[1].co=Vector((0,0,0))
+    bez_points[1].handle_left=Vector((-0.5*r,-0.5*k1*r,0))
+    bez_points[1].handle_right=Vector((0.5*r,-0.5*k2*r,0))
+
+
+    curve.data.resolution_u=100
+    curve.data.extrude=wdh*curve.data.splines[0].calc_length()*0.5
+
+    ops.object.mode_set(mode='OBJECT')
+
+    ops.object.convert(target='MESH')
+    ops.transform.rotate(value=math.pi/2,orient_axis='Y')
+    ops.transform.rotate(value=-math.pi/2,orient_axis='X')
+
+
+    # if not os.path.exists(args.out):
+    #     os.makedirs(args.out)
+    # fn='{:.2f}-{:.2f}-{:.2f}-{:.2f}.obj'.format(wdh,r,k1,k2)
+    # fPath = os.path.abspath(os.path.join(args.out, fn))
+    # if args.overwirte or not os.path.exists(fPath):
+    #     ops.export_scene.obj(filepath=fPath)
+    #     print("---output:"+fPath+"---")
+    # else:
+    #     print("exists")
+
 def render_img( texpath,objpath,envpath,confpath):
     prepare_scene()
     prepare_rendersettings()
-    bpy.ops.import_scene.obj(filepath=os.path.abspath(objpath))
+    if args.generate:
+        image=bpy.data.images.load(os.path.abspath(texpath) )
+        wdh=image.size[1]/image.size[0]
+        createBook(wdh,0.5,1,1)
+    else:
+    	bpy.ops.import_scene.obj(filepath=os.path.abspath(objpath))
     mesh_name=bpy.data.meshes[0].name
     mesh=position_object(mesh_name)
     if config["lighting"]=='hdr':
@@ -545,77 +601,84 @@ def render_img( texpath,objpath,envpath,confpath):
         #add texture
         page_texturing(mesh, texpath)
         render_pass(mesh, objpath, texpath,envpath,confpath)
+if __name__ == '__main__':
 
-#parse argument
-parser = argparse.ArgumentParser(description='Render mesh')
-parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
-parser.add_argument('-m','--mesh',help='mesh path',default='obj/1_1.obj')
-parser.add_argument('-e','--env',help='environment path',default='env/0001.hdr')
-parser.add_argument('-c','--conf',help='configuration path',default='config.json')
-parser.add_argument('-o','--out',help='output folder name',default='1')
-parser.add_argument('-b' ,'--batch', action='store_true',
-                        help='batch render files in folder')
-parser.add_argument('-s' ,'--selectmesh', action='store_true',
-                        help='batch render 1000 meshes')
-args, unknown = parser.parse_known_args(sys.argv[5:])
-print(args)
-
-
-try:
-    with open(args.conf, 'r', encoding='utf-8') as fs:
-        config=json.load(fs)
-        print(config)
-except IOError as e:
-    print(e)
+	#parse argument
+	parser = argparse.ArgumentParser(description='Render mesh')
+	parser.add_argument('-t','--texture',help='texture path',default='tex/pp_Page_001.jpg')
+	parser.add_argument('-m','--mesh',help='mesh path',default='obj/1_1.obj')
+	parser.add_argument('-e','--env',help='environment path',default='env/0001.hdr')
+	parser.add_argument('-c','--conf',help='configuration path',default='config.json')
+	parser.add_argument('-o','--out',help='output folder name',default='1')
+	parser.add_argument('-b' ,'--batch', action='store_true',
+	                        help='batch render files in folder')
+	parser.add_argument('-s' ,'--selectmesh', action='store_true',
+	                        help='batch render 1000 meshes')
+	parser.add_argument('--generate', action='store_true',
+	                        help='generate mesh')
+	parser.add_argument('--overwrite', action='store_true',
+	                        help='overwirte')
+	args, unknown = parser.parse_known_args(sys.argv[5:])
+	print(args)
 
 
-#prepare output directory
-path_to_output_images=os.path.abspath('./img/{}/'.format(args.out))
-path_to_output_uv = os.path.abspath('./uv/{}/'.format(args.out))
-path_to_output_wc = os.path.abspath('./wc/{}/'.format(args.out))
-path_to_output_alb =os.path.abspath('./alb/{}/'.format(args.out)) 
-path_to_output_blends=os.path.abspath('./bld/{}/'.format(args.out))
+	try:
+	    with open(args.conf, 'r', encoding='utf-8') as fs:
+	        config=json.load(fs)
+	        print(config)
+	except IOError as e:
+	    print(e)
 
-for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc,path_to_output_alb, path_to_output_blends]:
-    if not os.path.exists(fd):
-        os.makedirs(fd)
 
-if args.batch:
-	for fname in sorted(os.listdir(args.texture)):
-		if '.jpg' in fname or '.JPG' in fname or '.png' in fname:
-			randMesh=os.path.join(args.mesh,random.choice(os.listdir(args.mesh)) )
+	#prepare output directory
+	path_to_output_images=os.path.abspath('./img/{}/'.format(args.out))
+	path_to_output_uv = os.path.abspath('./uv/{}/'.format(args.out))
+	path_to_output_wc = os.path.abspath('./wc/{}/'.format(args.out))
+	path_to_output_alb =os.path.abspath('./alb/{}/'.format(args.out)) 
+	path_to_output_blends=os.path.abspath('./bld/{}/'.format(args.out))
+
+	for fd in [path_to_output_images, path_to_output_uv, path_to_output_wc,path_to_output_alb, path_to_output_blends]:
+	    if not os.path.exists(fd):
+	        os.makedirs(fd)
+
+	if args.batch:
+		meshList=glob.glob(os.path.join(args.mesh,"*.obj"))
+		envList=os.listdir(args.env)
+		for fname in sorted(os.listdir(args.texture)):
+			if '.jpg' in fname or '.JPG' in fname or '.png' in fname:
+				randMesh=os.path.join(args.mesh,random.choice(meshList) )
+				randEnv=os.path.join(args.env,random.choice())
+				fn=fname[:-4] 
+				fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
+				if not os.path.exists(fPath):
+					render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
+					print("---output:"+fPath+"---")
+				else:
+					print("exists")
+	elif args.selectmesh:
+		texpath='./recon_tex/chess48.png'
+		for fname in sorted(os.listdir(args.mesh)):
+			meshPath=os.path.join(args.mesh,fname)
 			randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
 			fn=fname[:-4] 
 			fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
 			if not os.path.exists(fPath):
-				render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
+				render_img(texpath,meshPath,randEnv,args.conf)
 				print("---output:"+fPath+"---")
 			else:
 				print("exists")
-elif args.selectmesh:
-	texpath='./recon_tex/chess48.png'
-	for fname in sorted(os.listdir(args.mesh)):
-		meshPath=os.path.join(args.mesh,fname)
-		randEnv=os.path.join(args.env,random.choice(os.listdir(args.env)))
-		fn=fname[:-4] 
+
+
+	else:
+		confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
+		fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
+		   + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
 		fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
-		if not os.path.exists(fPath):
-			render_img(texpath,meshPath,randEnv,args.conf)
+		if args.overwrite or not os.path.exists(fPath):
+			render_img(args.texture,args.mesh,args.env,args.conf)
 			print("---output:"+fPath+"---")
 		else:
 			print("exists")
-
-
-else:
-	confHash=hashlib.md5(open(args.conf, 'rb').read()).hexdigest()
-	fn=os.path.split(args.mesh)[1][:-4] +'-' + os.path.split(args.texture)[1][:-4] \
-	   + '-' +  os.path.split(args.env)[1][:-4] +'-'+ confHash[0:5]
-	fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
-	if not os.path.exists(fPath):
-		render_img(args.texture,args.mesh,args.env,args.conf)
-		print("---output:"+fPath+"---")
-	else:
-		print("exists")
 
 
 # rridx=sys.argv[-3]
