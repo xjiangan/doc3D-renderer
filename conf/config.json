@@ -4,7 +4,7 @@
     "resolution_x": 448,
     "resolution_y": 448,
     "resolution_percentage": 100,
-    "saveBlendFile":false,
+    "saveBlendFile":true,
     "renderOthers":true,
     "lighting":"hdr",
     "litpos":[0,5,0],

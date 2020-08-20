@@ -32,8 +32,7 @@ import hashlib
 from bpy import ops,context
 
 
-rridx = 1
-save_blend_file = True
+
 def reset_blend():
     bpy.ops.wm.read_factory_settings()  # ...
     bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)  # ...
@@ -322,7 +321,7 @@ def page_texturing(obj, texpath):
     bpy.ops.object.material_slot_add()
     mat = bpy.data.materials.new('Material.001')
     mat.use_nodes = True
-    obj.material_slots[0].material = bpy.data.materials['Material.001']
+    obj.material_slots[0].material = mat
     nodes = mat.node_tree.nodes
     # clear default nodes
     for n in nodes:
@@ -464,6 +463,8 @@ def prepare_no_env_render():
     scene.view_settings.view_transform = 'Standard'
 
 
+
+
 def render_pass(obj, objpath, texpath,envpath,confpath):
     # change output image name to obj file name + texture name + random three
     # characters (upper lower alphabet and digits)
@@ -509,6 +510,7 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
         uvlk = links.new(render_layers.outputs["UV"], file_output_node_uv.inputs[0])
         scene.cycles.samples = 1
         bpy.ops.render.render(write_still=False)
+        page_texturing(obj,'./recon_tex/chess48.png')
 
         get_albedo_img(fn+"-#")
         bpy.context.scene.camera = bpy.data.objects['Camera']
@@ -580,7 +582,7 @@ def render_img( texpath,objpath,envpath,confpath):
     if args.generate:
         image=bpy.data.images.load(os.path.abspath(texpath) )
         wdh=image.size[1]/image.size[0]
-        createBook(wdh,0.5,1,1)
+        createBook(wdh,0.5,random.uniform(0.1,1.7),random.uniform(0.1,1.7))
     else:
     	bpy.ops.import_scene.obj(filepath=os.path.abspath(objpath))
     mesh_name=bpy.data.meshes[0].name
@@ -642,16 +644,16 @@ if __name__ == '__main__':
 	        os.makedirs(fd)
 
 	if args.batch:
-		meshList=glob.glob(os.path.join(args.mesh,"*.obj"))
+		# meshList=glob.glob(os.path.join(args.mesh,"*.obj"))
 		envList=os.listdir(args.env)
 		for fname in sorted(os.listdir(args.texture)):
 			if '.jpg' in fname or '.JPG' in fname or '.png' in fname:
-				randMesh=os.path.join(args.mesh,random.choice(meshList) )
-				randEnv=os.path.join(args.env,random.choice())
+				# randMesh=os.path.join(args.mesh,random.choice(meshList) )
+				randEnv=os.path.join(args.env,random.choice(envList))
 				fn=fname[:-4] 
 				fPath =os.path.join(os.path.abspath(path_to_output_images),fn+'-1.png')
 				if not os.path.exists(fPath):
-					render_img(os.path.join(args.texture,fname),randMesh,randEnv,args.conf)
+					render_img(os.path.join(args.texture,fname),"randMesh",randEnv,args.conf)
 					print("---output:"+fPath+"---")
 				else:
 					print("exists")
