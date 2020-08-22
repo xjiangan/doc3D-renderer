@@ -493,7 +493,7 @@ def render_pass(obj, objpath, texpath,envpath,confpath):
 
     # save_blend_file
     if config["saveBlendFile"]:
-        bpy.ops.wm.save_mainfile(filepath=path_to_output_blends + fn + '.blend')
+        bpy.ops.wm.save_mainfile(filepath=os.path.join(path_to_output_blends,fn+ '.blend') )
 
     if config["renderOthers"]:
         # prepare to render without environment
